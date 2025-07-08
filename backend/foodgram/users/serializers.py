@@ -5,6 +5,8 @@ from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 
+from .models import Subscription
+
 UserModel = get_user_model()
 
 class AvatarBase64ImageField(serializers.ImageField):
@@ -22,8 +24,26 @@ class MyUserSerializer(UserSerializer):
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
     avatar = AvatarBase64ImageField(required=False, allow_null=True)
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
         model = UserModel
         fields = ('email', 'id', 'username', 'first_name', 
-                  'last_name', 'avatar')
+                  'last_name', 'is_subscribed', 'avatar')
+        
+    def get_is_subscribed(self, obj):
+        print(self.context)
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return Subscription.objects.filter(
+            user=user,
+            following=obj
+        ).exists()
+    
+
+class SubscriptionSerializer(MyUserSerializer):
+    class Meta:
+        model = MyUserSerializer.Meta.model
+        fields = MyUserSerializer.Meta.fields
+        
