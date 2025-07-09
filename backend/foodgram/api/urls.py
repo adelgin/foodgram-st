@@ -3,9 +3,11 @@ from rest_framework.authtoken import views
 from rest_framework.routers import DefaultRouter
 
 from users.views import MyUserViewSet
+from recipes.views import IngredientViewSet
 
 router = DefaultRouter()
 router.register('users', MyUserViewSet, basename='users')
+router.register('ingredients', IngredientViewSet, basename='ingredients')
 
 urlpatterns = [
     path('', include(router.urls)),
