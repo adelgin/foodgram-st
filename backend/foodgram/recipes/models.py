@@ -15,10 +15,15 @@ class Recipe(models.Model):
     image = models.ImageField(upload_to='recipes')
     text = models.TextField()
     cooking_time = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now=True, null=False)
+
+    class Meta:
+        ordering = ('-created_at', )
 
 
 class IngredientRecipe(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               related_name='ingredient_amount')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
 

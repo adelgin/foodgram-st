@@ -4,6 +4,8 @@ from rest_framework import viewsets, permissions
 from .models import Ingredient, Recipe, IngredientRecipe
 from .serializers import IngredientSerializer, RecipeSerializer
 from .filters import IngredientFilter
+from .permissions import IsAuthorOrReadOnly
+from .pagination import RecipePaginator
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -18,6 +20,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    permission_classes = (IsAuthorOrReadOnly, )
+    pagination_class = RecipePaginator
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
