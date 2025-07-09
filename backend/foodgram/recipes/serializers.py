@@ -29,7 +29,7 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         source='ingredient',
         required=True
     )
-    name = serializers.CharField(source='ingredeint.name', read_only=True)
+    name = serializers.CharField(source='ingredient.name', read_only=True)
     measurement_unit = serializers.CharField(
         source='ingredient.measurement_unit', read_only=True)
     amount = serializers.IntegerField(
@@ -52,17 +52,30 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ['id', 'author', 'ingredients', 'name', 
                   'image', 'text', 'cooking_time']
-
-    def create(self, validated_data):
-        ingredients = validated_data.pop('ingredient_amount')
-        recipe = Recipe.objects.create(**validated_data)
+        
+    def insert_ingredient_into_recipe(self, recipe, ingredients):
         IngredientRecipe.objects.bulk_create([
             IngredientRecipe(
                 recipe=recipe,
                 ingredient=ingredient['ingredient'],
                 amount=ingredient['amount']) for ingredient in ingredients])
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredient_amount')
+        recipe = Recipe.objects.create(**validated_data)
+        self.insert_ingredient_into_recipe(recipe, ingredients)
         return recipe
     
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredient_amount', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if ingredients:
+            IngredientRecipe.objects.filter(recipe=instance).delete()
+            self.insert_ingredient_into_recipe(instance, ingredients)
+        return instance
+
     def validate(self, data):
         ingredients = self.initial_data.get('ingredients')
 
@@ -77,4 +90,4 @@ class RecipeSerializer(serializers.ModelSerializer):
                     'Ingredients must be unique.')
             seen_ingredients.append(ingredient['id'])
 
-        return data
+        return data 
