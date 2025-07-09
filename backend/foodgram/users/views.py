@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 
 from .serializers import MyUserSerializer, SubscriptionSerializer
 from .models import Subscription
+from .pagination import MyUserPagination
 
 UserModel = get_user_model()
 
@@ -14,20 +15,12 @@ UserModel = get_user_model()
 class MyUserViewSet(UserViewSet):
     queryset = UserModel.objects.all()
     serializer_class = MyUserSerializer
+    pagination_class = MyUserPagination
 
     def get_permissions(self):
         if self.action in ('retrieve', 'list'):
             return (permissions.IsAuthenticatedOrReadOnly(), )
         return super().get_permissions()
-    
-    def get_serializer_class(self):
-        """Для правильного отображения полей
-        при запросе на эндпоинт users/me/
-        """
-        if self.action == 'me':
-            print('yopta')
-            return MyUserSerializer
-        return super().get_serializer_class()
     
     @action(methods=['put', 'delete'], url_path='me/avatar', detail=False)
     def avatar(self, request):
@@ -93,9 +86,13 @@ class MyUserViewSet(UserViewSet):
     def subscriptions(self, request):
         user = request.user
 
-        subscriptions = Subscription.objects.filter(following=user).values('user')
+        subscriptions = UserModel.objects.filter(followers__user=user.id)
 
-        serializer = SubscriptionSerializer(subscriptions, many=True)
+        page = self.pagination_class().paginate_queryset(subscriptions,
+                                                         request=request)
+
+        serializer = SubscriptionSerializer(page, many=True,
+                                            context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
                                         

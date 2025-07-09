@@ -32,7 +32,6 @@ class MyUserSerializer(UserSerializer):
                   'last_name', 'is_subscribed', 'avatar')
         
     def get_is_subscribed(self, obj):
-        print(self.context)
         user = self.context['request'].user
         if user.is_anonymous:
             return False
@@ -43,7 +42,5 @@ class MyUserSerializer(UserSerializer):
     
 
 class SubscriptionSerializer(MyUserSerializer):
-    class Meta:
-        model = MyUserSerializer.Meta.model
-        fields = MyUserSerializer.Meta.fields
+    pass
         
