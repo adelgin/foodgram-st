@@ -22,6 +22,11 @@ class MyUserViewSet(UserViewSet):
             return (permissions.IsAuthenticatedOrReadOnly(), )
         return super().get_permissions()
     
+    def get_serializer_class(self):
+        if self.action == 'me':
+            return MyUserSerializer
+        return super().get_serializer_class()
+    
     @action(methods=['put', 'delete'], url_path='me/avatar', detail=False)
     def avatar(self, request):
         user = request.user
@@ -85,16 +90,14 @@ class MyUserViewSet(UserViewSet):
     @action(methods=['get', ], url_path='subscriptions', detail=False)
     def subscriptions(self, request):
         user = request.user
+        paginator = self.pagination_class()
 
         subscriptions = UserModel.objects.filter(followers__user=user.id)
-
-        page = self.pagination_class().paginate_queryset(subscriptions,
-                                                         request=request)
-
+        page = paginator.paginate_queryset(subscriptions, request=request)
         serializer = SubscriptionSerializer(page, many=True,
                                             context={'request': request})
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
                                         
 
 

@@ -6,6 +6,7 @@ from djoser.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 
 from .models import Subscription
+from recipes.models import Recipe
 
 UserModel = get_user_model()
 
@@ -41,6 +42,37 @@ class MyUserSerializer(UserSerializer):
         ).exists()
     
 
+class UserRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+    
+
 class SubscriptionSerializer(MyUserSerializer):
-    pass
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta(MyUserSerializer.Meta):
+        fields = MyUserSerializer.Meta.fields + ('recipes', 'recipes_count')
+
+    def get_recipes(self, obj):
+        recipes = Recipe.objects.filter(author=obj)
+
+        request = self.context['request']
+        recipes_limit = request.query_params.get('recipes_limit')
+
+        try:
+            recipes_limit = int(recipes_limit)
+        except:
+            recipes_limit = 0
+        
+        if recipes_limit > 0:
+            recipes = recipes[:recipes_limit]
+
+        serializer = UserRecipeSerializer(recipes, many=True)
+
+        return serializer.data
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj).count()
         

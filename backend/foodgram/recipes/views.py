@@ -1,9 +1,9 @@
-from django.shortcuts import render
 from rest_framework import viewsets, permissions
+from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Ingredient, Recipe, IngredientRecipe
+from .models import Ingredient, Recipe
 from .serializers import IngredientSerializer, RecipeSerializer
-from .filters import IngredientFilter
+from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .pagination import RecipePaginator
 
@@ -22,6 +22,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrReadOnly, )
     pagination_class = RecipePaginator
+    filter_backends = (DjangoFilterBackend, )
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

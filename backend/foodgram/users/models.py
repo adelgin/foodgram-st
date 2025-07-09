@@ -12,6 +12,9 @@ class MyUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
+    class Meta:
+        ordering = ('-date_joined', )
+
 
 class Subscription(models.Model):
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE, null=False)
