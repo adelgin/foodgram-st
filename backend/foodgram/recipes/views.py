@@ -38,7 +38,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_short_link(self, request, pk):
         short_link = 'http://' + request.get_host() + '/recipes/' + pk
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
-    
+
     def recipe_control(self, model, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
@@ -46,26 +46,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             if model.objects.filter(user=user, recipe=recipe).exists():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            
+
             model.objects.create(user=user, recipe=recipe)
             serializer = UserRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
         object = model.objects.filter(user=user, recipe=recipe)
 
         if object.exists():
             object.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    
+
     @action(methods=['post', 'delete'], detail=True, url_path='favorite')
     def favorite(self, request, pk):
         return self.recipe_control(Favorite, request, pk)
-    
+
     @action(methods=['post', 'delete'], detail=True, url_path='shopping_cart')
     def shopping_cart(self, request, pk):
         return self.recipe_control(ShoppingCart, request, pk)
-    
+
     @action(methods=['get', ], detail=False, url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
         user = request.user

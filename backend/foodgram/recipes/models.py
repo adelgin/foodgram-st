@@ -1,8 +1,8 @@
 from django.db import models
-
 from django.contrib.auth import get_user_model
 
 UserModel = get_user_model()
+
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=128, unique=True)
@@ -42,12 +42,12 @@ class IngredientRecipe(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['recipe', 'ingredient'],
                                     name='unique ingredient recipe')]
-        
+
     def __str__(self):
         return f'{self.recipe} - {self.ingredient} {self.amount}' \
             f'{self.ingredient.measurement_unit}'
 
-    
+
 class Favorite(models.Model):
     user = models.ForeignKey(UserModel, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
@@ -59,10 +59,10 @@ class Favorite(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
                                     name='unique recipe in favorite')]
-        
+
     def __str__(self):
         return f'{self.recipe} в избранном у {self.user.username}'
-        
+
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(UserModel, on_delete=models.CASCADE)
@@ -75,6 +75,6 @@ class ShoppingCart(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
                                     name='unique recipe in shopping cart')]
-        
+
     def __str__(self):
         return f'{self.recipe} в корзине у {self.user.username}'

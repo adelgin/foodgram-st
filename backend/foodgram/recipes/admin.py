@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (Ingredient, Recipe, IngredientRecipe, Favorite,
                      ShoppingCart)
 
+
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name', )
@@ -16,7 +17,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     def favorite_count(self, obj):
         return Favorite.objects.filter(recipe=obj).count()
-    
+
 
 @admin.register(IngredientRecipe)
 class IngredientRecipeAdmin(admin.ModelAdmin):

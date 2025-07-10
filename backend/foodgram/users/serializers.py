@@ -10,12 +10,13 @@ from recipes.models import Recipe
 
 UserModel = get_user_model()
 
+
 class AvatarBase64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), 
+            data = ContentFile(base64.b64decode(imgstr),
                                name='user_avatar.' + ext)
         return super().to_internal_value(data)
 
@@ -29,9 +30,9 @@ class MyUserSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         model = UserModel
-        fields = ('email', 'id', 'username', 'first_name', 
+        fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'avatar')
-        
+
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
@@ -40,13 +41,13 @@ class MyUserSerializer(UserSerializer):
             user=user,
             following=obj
         ).exists()
-    
+
 
 class UserRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
-    
+
 
 class SubscriptionSerializer(MyUserSerializer):
     recipes = serializers.SerializerMethodField()
@@ -63,9 +64,9 @@ class SubscriptionSerializer(MyUserSerializer):
 
         try:
             recipes_limit = int(recipes_limit)
-        except:
+        except TypeError:
             recipes_limit = 0
-        
+
         if recipes_limit > 0:
             recipes = recipes[:recipes_limit]
 
@@ -75,4 +76,3 @@ class SubscriptionSerializer(MyUserSerializer):
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
-        

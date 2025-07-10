@@ -6,9 +6,10 @@ from .models import Subscription
 
 UserModel = get_user_model()
 
+
 @admin.register(UserModel)
 class MyUserAdmin(UserAdmin):
-    fieldsets = UserAdmin.fieldsets + (('Дополнительно', 
+    fieldsets = UserAdmin.fieldsets + (('Дополнительно',
                                         {'fields': ('avatar', )}), )
     search_fields = ('username', 'email')
 
