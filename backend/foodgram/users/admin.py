@@ -15,4 +15,5 @@ class MyUserAdmin(UserAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ('user__username', 'following__username', 'user__email',
+                     'following__email')

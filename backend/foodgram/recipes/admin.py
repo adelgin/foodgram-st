@@ -6,6 +6,7 @@ from .models import (Ingredient, Recipe, IngredientRecipe, Favorite,
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name', )
+    list_display = ('name', 'measurement_unit')
 
 
 @admin.register(Recipe)
@@ -19,14 +20,14 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(IngredientRecipe)
 class IngredientRecipeAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ('recipe__name', 'ingredient__name')
 
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ('user__username', 'user__email', 'recipe__name')
 
 
 @admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
+class ShoppingCartAdmin(FavoriteAdmin):
     pass
