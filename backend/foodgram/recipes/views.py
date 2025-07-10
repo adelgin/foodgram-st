@@ -1,10 +1,12 @@
 from rest_framework import viewsets, permissions, status
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import FileResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import Ingredient, Recipe, Favorite, ShoppingCart
+from .models import (Ingredient, Recipe, Favorite, ShoppingCart,
+                     IngredientRecipe)
 from .serializers import IngredientSerializer, RecipeSerializer
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
@@ -37,46 +39,57 @@ class RecipeViewSet(viewsets.ModelViewSet):
         short_link = 'http://' + request.get_host() + '/recipes/' + pk
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
     
-    @action(methods=['post', 'delete'], detail=True, url_path='favorite')
-    def favorite(self, request, pk):
+    def recipe_control(self, model, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
 
         if request.method == 'POST':
-            if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            if model.objects.filter(user=user, recipe=recipe).exists():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             
-            Favorite.objects.create(user=user, recipe=recipe)
-
+            model.objects.create(user=user, recipe=recipe)
             serializer = UserRecipeSerializer(recipe)
-
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-        favorite = Favorite.objects.filter(user=user, recipe=recipe)
+        object = model.objects.filter(user=user, recipe=recipe)
 
-        if favorite.exists():
-            favorite.delete()
+        if object.exists():
+            object.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
+    @action(methods=['post', 'delete'], detail=True, url_path='favorite')
+    def favorite(self, request, pk):
+        return self.recipe_control(Favorite, request, pk)
+    
     @action(methods=['post', 'delete'], detail=True, url_path='shopping_cart')
     def shopping_cart(self, request, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
+        return self.recipe_control(ShoppingCart, request, pk)
+    
+    @action(methods=['get', ], detail=False, url_path='download_shopping_cart')
+    def download_shopping_cart(self, request):
         user = request.user
+        recipes = Recipe.objects.filter(shoppingcart__user=user)
 
-        if request.method == 'POST':
-            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            
-            ShoppingCart.objects.create(user=user, recipe=recipe)
+        ingredients = dict()
 
-            serializer = UserRecipeSerializer(recipe)
+        for recipe in recipes:
+            ingredient_in_recipe = IngredientRecipe.objects.filter(
+                recipe=recipe).values('ingredient__name', 'amount',
+                                      'ingredient__measurement_unit')
+            for ingredient in ingredient_in_recipe:
+                name = ingredient['ingredient__name']
+                amount = ingredient['amount']
+                measurement_unit = ingredient['ingredient__measurement_unit']
+                if name not in ingredients.keys():
+                    ingredients[name] = [0, measurement_unit]
+                    print(ingredients[name][0])
+                ingredients[name][0] += amount
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        shopping_cart = ShoppingCart.objects.filter(user=user, recipe=recipe)
+        ingredients_list = [f'{name} - {value[0]} {value[1]}'
+                            for name, value in ingredients.items()]
 
-        if shopping_cart.exists():
-            shopping_cart.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        ingredients_string = '\n'.join(ingredients_list)
+
+        return FileResponse(ingredients_string, filename='shopping-list.txt',
+                            as_attachment=True)
