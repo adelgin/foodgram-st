@@ -1,5 +1,7 @@
 from rest_framework import viewsets, permissions
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .models import Ingredient, Recipe
 from .serializers import IngredientSerializer, RecipeSerializer
@@ -27,3 +29,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(methods=['get', ], detail=True, url_path='get-link')
+    def get_short_link(self, request, pk):
+        short_link = 'http://' + request.get_host() + '/recipes/' + pk
+        return Response({'short-link': short_link})
