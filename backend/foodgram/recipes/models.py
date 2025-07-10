@@ -31,3 +31,15 @@ class IngredientRecipe(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['recipe', 'ingredient'],
                                     name='unique ingredient recipe')]
+
+    
+class Favorite(models.Model):
+    user = models.ForeignKey(UserModel, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now=True, null=False)
+
+    class Meta:
+        ordering = ('-created_at', )
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique recipe in favorite')]

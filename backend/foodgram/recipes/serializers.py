@@ -4,7 +4,7 @@ from rest_framework import serializers
 from django.core.files.base import ContentFile
 from django.core.validators import MinValueValidator
 
-from .models import Ingredient, Recipe, IngredientRecipe
+from .models import Ingredient, Recipe, IngredientRecipe, Favorite
 from users.serializers import MyUserSerializer
 
 class RecipeBase64ImageField(serializers.ImageField):
@@ -47,10 +47,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         validators=[MinValueValidator(limit_value=1), ], required=True)
     ingredients = IngredientRecipeSerializer(source='ingredient_amount', 
                                              required=True, many=True)
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = ['id', 'author', 'ingredients', 'name', 
+        fields = ['id', 'author', 'ingredients', 'is_favorited', 'name', 
                   'image', 'text', 'cooking_time']
         
     def insert_ingredient_into_recipe(self, recipe, ingredients):
@@ -90,4 +91,10 @@ class RecipeSerializer(serializers.ModelSerializer):
                     'Ingredients must be unique.')
             seen_ingredients.append(ingredient['id'])
 
-        return data 
+        return data
+    
+    def get_is_favorited(self, obj):
+        request = self.context['request']
+        user = request.user
+
+        return Favorite.objects.filter(user=user.id, recipe=obj).exists()
