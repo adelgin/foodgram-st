@@ -4,7 +4,8 @@ from rest_framework import serializers
 from django.core.files.base import ContentFile
 from django.core.validators import MinValueValidator
 
-from .models import Ingredient, Recipe, IngredientRecipe, Favorite
+from .models import (Ingredient, Recipe, IngredientRecipe, Favorite,
+                     ShoppingCart)
 from users.serializers import MyUserSerializer
 
 class RecipeBase64ImageField(serializers.ImageField):
@@ -48,11 +49,13 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientRecipeSerializer(source='ingredient_amount', 
                                              required=True, many=True)
     is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = ['id', 'author', 'ingredients', 'is_favorited', 'name', 
-                  'image', 'text', 'cooking_time']
+        fields = ['id', 'author', 'ingredients', 'is_favorited',
+                  'is_in_shopping_cart', 'name', 'image', 'text',
+                  'cooking_time']
         
     def insert_ingredient_into_recipe(self, recipe, ingredients):
         IngredientRecipe.objects.bulk_create([
@@ -98,3 +101,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         user = request.user
 
         return Favorite.objects.filter(user=user.id, recipe=obj).exists()
+    
+    def get_is_in_shopping_cart(self, obj):
+        request = self.context['request']
+        user = request.user
+
+        return ShoppingCart.objects.filter(user=user.id, recipe=obj).exists()
