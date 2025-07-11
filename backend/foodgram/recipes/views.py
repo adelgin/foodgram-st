@@ -92,4 +92,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ingredients_string = '\n'.join(ingredients_list)
 
         return FileResponse(ingredients_string, filename='shopping-list.txt',
-                            as_attachment=True)
+                            as_attachment=True, content_type='text/plain')
